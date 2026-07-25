@@ -1283,8 +1283,8 @@
 
                 if (!data || !data.positions) {
                     const targetEndpoints = [
-                        `https://corsproxy.io/?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`,
-                        `https://api.allorigins.win/raw?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`
+                        `https://cors.eu.org/https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`,
+                        `https://corsproxy.io/?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`
                     ];
                     if (isLocal) {
                         targetEndpoints.unshift(`https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`);
