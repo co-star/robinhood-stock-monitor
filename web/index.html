@@ -909,69 +909,37 @@
         }
 
         async function fetchData() {
-            // 1. Primary: Direct query to Uniswap Official API
-            try {
-                const uniEndpoints = [
-                    "https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListRankedRwas",
-                    "https://entry-gateway.backend-prod.api.uniswap.org/data.v1.DataApiService/ListRankedRwas"
-                ];
-
-                for (const url of uniEndpoints) {
-                    try {
-                        const resp = await fetch(url, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                category: "RWA_CATEGORY_STOCKS",
-                                chainIds: [4663],
-                                includeSparkline1d: true
-                            })
-                        });
-                        if (resp.ok) {
-                            const rawData = await resp.json();
-                            if (rawData && rawData.rwas && rawData.rwas.length > 0) {
-                                // Parse Uniswap direct RWA data
-                                const parsed = parseDirectUniswapRwaData(rawData.rwas);
-                                if (parsed && parsed.top_20_official_stocks && parsed.top_20_official_stocks.length > 0) {
-                                    currentData = parsed;
-                                    renderDashboard(parsed);
-                                    return;
-                                }
-                            }
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 1. If running locally, fetch from Python scanner API server
+            if (isLocal) {
+                try {
+                    const resp = await fetch('/api/scan-data');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && data.top_20_official_stocks) {
+                            currentData = data;
+                            renderDashboard(data);
+                            return;
                         }
-                    } catch (e) {
-                        console.warn("Direct Uni endpoint fetch note:", e);
+                    }
+                } catch (e) {
+                    console.log("Local backend server offline, falling back to static snapshot...");
+                }
+            }
+
+            // 2. Static host (GitHub Pages / Vercel / Netlify): load relative data/latest_scan.json directly without CORS or 404 errors
+            try {
+                const resp = await fetch('./data/latest_scan.json');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.top_20_official_stocks) {
+                        currentData = data;
+                        renderDashboard(data);
                     }
                 }
             } catch (err) {
-                console.log("Direct Uni API fetch fallback to local...");
-            }
-
-            // 2. Fallback to local service / cached JSON
-            try {
-                let resp = await fetch('/api/scan-data');
-                if (!resp.ok) {
-                    resp = await fetch('./data/latest_scan.json');
-                }
-                const data = await resp.json();
-                if (data && data.top_20_official_stocks) {
-                    currentData = data;
-                    renderDashboard(data);
-                    return;
-                }
-            } catch (err) {
-                console.log("Using static local data fallback...");
-            }
-
-            try {
-                const fallbackResp = await fetch('./data/latest_scan.json');
-                const fallbackData = await fallbackResp.json();
-                if (fallbackData && fallbackData.top_20_official_stocks) {
-                    currentData = fallbackData;
-                    renderDashboard(fallbackData);
-                }
-            } catch (fallbackErr) {
-                console.error("Static data fallback error:", fallbackErr);
+                console.error("Static dataset fetch error:", err);
             }
         }
 
