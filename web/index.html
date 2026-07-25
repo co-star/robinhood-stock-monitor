@@ -1031,18 +1031,21 @@
             icon.classList.add('spin');
             btn.disabled = true;
 
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
             try {
-                await fetch('/api/trigger-scan');
-                setTimeout(async () => {
-                    await fetchData();
+                if (isLocal) {
+                    await fetch('/api/trigger-scan');
+                }
+                await fetchData();
+            } catch (err) {
+                console.warn("Trigger scan error:", err);
+            } finally {
+                setTimeout(() => {
                     icon.classList.remove('spin');
                     btn.disabled = false;
                     countdownSeconds = 600;
-                }, 4000);
-            } catch (err) {
-                console.error("Trigger scan error:", err);
-                icon.classList.remove('spin');
-                btn.disabled = false;
+                }, 800);
             }
         }
 
@@ -1314,7 +1317,7 @@
                     }
                 }
 
-                const allPositions = data.positions || [];
+                const allPositions = (data && data.positions) ? data.positions : [];
 
                 // STRICT FILTER: ONLY ROBINHOOD CHAIN (Chain ID 4663)
                 const rhPositions = allPositions.filter(p => p.chainId === 4663);
