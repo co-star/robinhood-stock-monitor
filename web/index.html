@@ -1267,27 +1267,51 @@
 
             try {
                 let data = null;
-                try {
-                    const resp = await fetch(`/api/wallet-positions?wallet=${account}`);
-                    if (resp.ok) {
-                        data = await resp.json();
-                    }
-                } catch (e) {}
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                
+                if (isLocal) {
+                    try {
+                        const resp = await fetch(`/api/wallet-positions?wallet=${account}`);
+                        if (resp.ok) {
+                            data = await resp.json();
+                        }
+                    } catch (e) {}
+                }
 
                 if (!data || !data.positions) {
-                    const uniResp = await fetch("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            address: account,
-                            chainIds: [1,130,8453,42161,4663,4217,143,137,196,10,56,43114,59144,480,324,4326,1868,7777777,42220,81457],
-                            protocolVersions: ["PROTOCOL_VERSION_V4","PROTOCOL_VERSION_V3","PROTOCOL_VERSION_V2"],
-                            positionStatuses: ["POSITION_STATUS_IN_RANGE","POSITION_STATUS_OUT_OF_RANGE"],
-                            pageSize: 50,
-                            includeHidden: true
-                        })
+                    const targetEndpoints = [
+                        `https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`,
+                        `https://corsproxy.io/?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`,
+                        `https://api.allorigins.win/raw?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`
+                    ];
+
+                    const bodyPayload = JSON.stringify({
+                        address: account,
+                        chainIds: [1,130,8453,42161,4663,4217,143,137,196,10,56,43114,59144,480,324,4326,1868,7777777,42220,81457],
+                        protocolVersions: ["PROTOCOL_VERSION_V4","PROTOCOL_VERSION_V3","PROTOCOL_VERSION_V2"],
+                        positionStatuses: ["POSITION_STATUS_IN_RANGE","POSITION_STATUS_OUT_OF_RANGE"],
+                        pageSize: 50,
+                        includeHidden: true
                     });
-                    data = await uniResp.json();
+
+                    for (const url of targetEndpoints) {
+                        try {
+                            const uniResp = await fetch(url, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: bodyPayload
+                            });
+                            if (uniResp.ok) {
+                                const parsed = await uniResp.json();
+                                if (parsed && parsed.positions) {
+                                    data = parsed;
+                                    break;
+                                }
+                            }
+                        } catch (err) {
+                            console.warn("Uni positions fetch note for url:", url, err);
+                        }
+                    }
                 }
 
                 const allPositions = data.positions || [];
