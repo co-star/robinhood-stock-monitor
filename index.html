@@ -1283,10 +1283,12 @@
 
                 if (!data || !data.positions) {
                     const targetEndpoints = [
-                        `https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`,
                         `https://corsproxy.io/?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`,
                         `https://api.allorigins.win/raw?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`
                     ];
+                    if (isLocal) {
+                        targetEndpoints.unshift(`https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`);
+                    }
 
                     const bodyPayload = JSON.stringify({
                         address: account,
