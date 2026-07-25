@@ -1,0 +1,33 @@
+{
+  "RPC_URLS": [
+    "https://api.zan.top/node/v1/bsc/mainnet/a66c62335aa249e7b548a5ca18444d41",
+    "https://rpc.ankr.com/bsc/5eda0e38abb19c485f42b7f06e2046632919605f251281a544218707d121a2e8",
+    "https://bsc.meowrpc.com"
+  ],
+  "NFT_CONTRACT_ADDRESS": "0xf2c62b9d077d2815bcb29a07144bba4df9dff92b",
+  "BPEG_TOKEN_ADDRESS": "0x7eae639d8d90cb6dbbb81258e9be65b4f356ffff",
+  "ACCOUNTS_FILE": "account.txt",
+  "MINT_AMOUNT_BPEG": 1000000,
+  "BPEG_DECIMALS": 18,
+  "GAS_LIMIT": 500000,
+  "GAS_PRICE_MULTIPLIER": 1.0,
+  "LOOP_MODE": true,
+  "LOOP_INTERVAL": 0,
+  "REDEEM_THRESHOLD": 1010000,
+  "WBNB_TOKEN_ADDRESS": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+  "BONUS_THRESHOLD": 1.06,
+  "ROBINHOOD_RPC_URLS": [
+    "https://rpc.mainnet.chain.robinhood.com",
+    "https://robinhood-mainnet.g.alchemy.com/v2/public"
+  ],
+  "ROBINHOOD_VAULT_ADDRESSES": [],
+  "MIN_BUDGET_ETH": 0.01,
+  "POLL_INTERVAL_SECS": 15,
+  "BUY_USDG_THRESHOLD_ETH": 0.12,
+  "BUY_USDG_AMOUNT_ETH": 0.1,
+  "MIN_STOCK_BALANCE": 0.01,
+  "SWAP_AMOUNT_USDG": 10.0,
+  "AUTO_SWAP": false,
+  "EXCLUDE_SYMBOLS": ["HOLD", "STOCK", "ROUNDHILL", "CHIP"],
+  "MAX_SCAN_TOKENS": 20
+}
