@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/scan-data",
+      "destination": "https://entry-gateway.backend-prod.api.uniswap.org/data.v1.DataApiService/ListRankedRwas"
+    },
+    {
+      "source": "/api/wallet-positions",
+      "destination": "https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions"
+    }
+  ]
+}

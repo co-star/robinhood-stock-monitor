@@ -909,26 +909,22 @@
         }
 
         async function fetchData() {
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // 1. If running locally, fetch from Python scanner API server with cache busting
-            if (isLocal) {
-                try {
-                    const resp = await fetch(`/api/scan-data?_t=${Date.now()}`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        if (data && data.top_20_official_stocks) {
-                            currentData = data;
-                            renderDashboard(data);
-                            return;
-                        }
+            // 1. Try /api/scan-data (works on Local Python server & Vercel Edge proxy without CORS)
+            try {
+                const resp = await fetch(`/api/scan-data?_t=${Date.now()}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.top_20_official_stocks) {
+                        currentData = data;
+                        renderDashboard(data);
+                        return;
                     }
-                } catch (e) {
-                    console.log("Local backend server offline, falling back to static snapshot...");
                 }
+            } catch (e) {
+                // Ignore fallback to static JSON
             }
 
-            // 2. Static host snapshot loading with strict cache busting (?_t=Date.now()) - 0 CORS, 0 404 errors
+            // 2. GitHub Pages / Static host: Load auto-updated ./data/latest_scan.json (Updated every 10 mins via GitHub Actions)
             try {
                 const resp = await fetch(`./data/latest_scan.json?_t=${Date.now()}`);
                 if (resp.ok) {
