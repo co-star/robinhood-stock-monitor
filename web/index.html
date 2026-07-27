@@ -911,33 +911,7 @@
         async function fetchData() {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            // 1. Primary for deployed site / local: Try live Uniswap ListRankedRwas API via CORS proxy for real-time live data
-            try {
-                const liveResp = await fetch("https://cors.eu.org/https://entry-gateway.backend-prod.api.uniswap.org/data.v1.DataApiService/ListRankedRwas", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        category: "RWA_CATEGORY_STOCKS",
-                        chainIds: [4663],
-                        includeSparkline1d: true
-                    })
-                });
-                if (liveResp.ok) {
-                    const rawData = await liveResp.json();
-                    if (rawData && rawData.rwas && rawData.rwas.length > 0) {
-                        const parsed = parseDirectUniswapRwaData(rawData.rwas);
-                        if (parsed && parsed.top_20_official_stocks && parsed.top_20_official_stocks.length > 0) {
-                            currentData = parsed;
-                            renderDashboard(parsed);
-                            return;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log("Live Uni proxy fetch fallback to snapshot:", e);
-            }
-
-            // 2. If running locally, fetch from Python scanner API server with cache busting
+            // 1. If running locally, fetch from Python scanner API server with cache busting
             if (isLocal) {
                 try {
                     const resp = await fetch(`/api/scan-data?_t=${Date.now()}`);
@@ -954,7 +928,7 @@
                 }
             }
 
-            // 3. Static host snapshot fallback with strict cache busting (?_t=Date.now())
+            // 2. Static host snapshot loading with strict cache busting (?_t=Date.now()) - 0 CORS, 0 404 errors
             try {
                 const resp = await fetch(`./data/latest_scan.json?_t=${Date.now()}`);
                 if (resp.ok) {
