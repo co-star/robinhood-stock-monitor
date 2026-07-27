@@ -909,22 +909,28 @@
         }
 
         async function fetchData() {
-            // 1. Try /api/scan-data (works on Local Python server & Vercel Edge proxy without CORS)
-            try {
-                const resp = await fetch(`/api/scan-data?_t=${Date.now()}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data && data.top_20_official_stocks) {
-                        currentData = data;
-                        renderDashboard(data);
-                        return;
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const isVercel = window.location.hostname.endsWith('vercel.app');
+
+            // 1. Local Python service or Vercel Edge proxy: fetch live /api/scan-data
+            if (isLocal || isVercel) {
+                try {
+                    const resp = await fetch(`/api/scan-data?_t=${Date.now()}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && data.top_20_official_stocks) {
+                            currentData = data;
+                            renderDashboard(data);
+                            return;
+                        }
                     }
+                } catch (e) {
+                    console.log("Local/Vercel backend fetch note:", e);
                 }
-            } catch (e) {
-                // Ignore fallback to static JSON
             }
 
-            // 2. GitHub Pages / Static host: Load auto-updated ./data/latest_scan.json (Updated every 10 mins via GitHub Actions)
+            // 2. GitHub Pages (co-star.github.io): Load ./data/latest_scan.json with strict cache busting
+            // NEVER call /api/scan-data on github.io so no 404 error is ever logged in browser DevTools!
             try {
                 const resp = await fetch(`./data/latest_scan.json?_t=${Date.now()}`);
                 if (resp.ok) {
