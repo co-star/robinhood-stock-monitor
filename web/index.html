@@ -912,30 +912,40 @@
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const isVercel = window.location.hostname.endsWith('vercel.app');
 
-            // 1. Primary: Direct live fetch from Uniswap official ListRankedRwas API via CORS proxy for real-time live data
-            try {
-                const liveResp = await fetch("https://cors.eu.org/https://entry-gateway.backend-prod.api.uniswap.org/data.v1.DataApiService/ListRankedRwas", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        category: "RWA_CATEGORY_STOCKS",
-                        chainIds: [4663],
-                        includeSparkline1d: true
-                    })
-                });
-                if (liveResp.ok) {
-                    const rawData = await liveResp.json();
-                    if (rawData && rawData.rwas && rawData.rwas.length > 0) {
-                        const parsed = parseDirectUniswapRwaData(rawData.rwas);
-                        if (parsed && parsed.top_20_official_stocks && parsed.top_20_official_stocks.length > 0) {
-                            currentData = parsed;
-                            renderDashboard(parsed);
-                            return;
+            // 1. Primary: Direct live fetch from Uniswap official ListRankedRwas API via multi-proxy fallback for real-time live data
+            const RWA_TARGET = "https://entry-gateway.backend-prod.api.uniswap.org/data.v1.DataApiService/ListRankedRwas";
+            const RWA_PROXIES = [
+                `https://corsproxy.io/?url=${encodeURIComponent(RWA_TARGET)}`,
+                `https://api.cors.lol/?url=${encodeURIComponent(RWA_TARGET)}`,
+                `https://cors.eu.org/${RWA_TARGET}`,
+                `https://proxy.cors.sh/${RWA_TARGET}`
+            ];
+            const rwaBody = JSON.stringify({
+                category: "RWA_CATEGORY_STOCKS",
+                chainIds: [4663],
+                includeSparkline1d: true
+            });
+            for (const proxyUrl of RWA_PROXIES) {
+                try {
+                    const liveResp = await fetch(proxyUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: rwaBody
+                    });
+                    if (liveResp.ok) {
+                        const rawData = await liveResp.json();
+                        if (rawData && rawData.rwas && rawData.rwas.length > 0) {
+                            const parsed = parseDirectUniswapRwaData(rawData.rwas);
+                            if (parsed && parsed.top_20_official_stocks && parsed.top_20_official_stocks.length > 0) {
+                                currentData = parsed;
+                                renderDashboard(parsed);
+                                return;
+                            }
                         }
                     }
+                } catch (e) {
+                    console.warn(`[RWA proxy failed] ${proxyUrl}:`, e.message || e);
                 }
-            } catch (e) {
-                console.warn("Live Uni proxy fetch fallback to local/static snapshot:", e);
             }
 
             // 2. Local Python service or Vercel Edge proxy: fetch /api/scan-data
@@ -1337,9 +1347,12 @@
                 }
 
                 if (!data || !data.positions) {
+                    const LP_TARGET = "https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions";
                     const targetEndpoints = [
-                        `https://cors.eu.org/https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`,
-                        `https://corsproxy.io/?url=${encodeURIComponent("https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions")}`
+                        `https://corsproxy.io/?url=${encodeURIComponent(LP_TARGET)}`,
+                        `https://api.cors.lol/?url=${encodeURIComponent(LP_TARGET)}`,
+                        `https://cors.eu.org/${LP_TARGET}`,
+                        `https://proxy.cors.sh/${LP_TARGET}`
                     ];
                     if (isLocal) {
                         targetEndpoints.unshift(`https://interface.gateway.uniswap.org/v2/data.v1.DataApiService/ListPositions`);
