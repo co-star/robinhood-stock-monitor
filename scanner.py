@@ -55,8 +55,11 @@ def fetch_official_uniswap_rwas():
                 for item in rwas:
                     sym = item.get("symbol", "").upper()
                     name = item.get("name", sym)
-                    price_usd = item.get("priceUsd", 0)
-                    vol_24h_usd = item.get("volume24hUsd", 0)
+                    price_usd = float(item.get("priceUsd") or 0)
+                    vol_24h_usd = float(item.get("volume24hUsd") or 0)
+                    market_cap_usd = float(item.get("marketCapUsd") or 0)
+                    change_24h_pct = float(item.get("priceChange24hPct") or 0)
+                    change_1h_pct = float(item.get("priceChange1hPct") or 0)
                     
                     address = None
                     issuer_tokens = item.get("issuerTokens", [])
@@ -75,7 +78,10 @@ def fetch_official_uniswap_rwas():
                             "name": name,
                             "address": address,
                             "uni_price_usd": price_usd,
-                            "uni_vol_24h_usd": vol_24h_usd
+                            "uni_vol_24h_usd": vol_24h_usd,
+                            "uni_market_cap_usd": market_cap_usd,
+                            "uni_change_24h_pct": change_24h_pct,
+                            "uni_change_1h_pct": change_1h_pct
                         }
                 if tokens_map:
                     return tokens_map
@@ -251,7 +257,9 @@ def scan_token_usdg_pools(addr, token_info):
         "price": price,
         "volume_1h": total_v1h,
         "prev_volume_1h": max(0.0, total_v1h * 0.85),
-        "volume_24h": total_v24 if total_v24 > 0 else token_info.get("uni_vol_24h_usd", 0),
+        "volume_24h": token_info.get("uni_vol_24h_usd") if token_info.get("uni_vol_24h_usd", 0) > 0 else total_v24,
+        "market_cap_usd": token_info.get("uni_market_cap_usd", 0),
+        "change_24h_pct": token_info.get("uni_change_24h_pct", 0),
         "fee_24h": total_fee_24h,
         "prev_fee_1h": total_fee_1h_prev,
         "fee_30m_curr": tok_30m_curr,
